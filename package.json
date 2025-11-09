@@ -1,0 +1,14 @@
+{
+  "name": "gateless-exercise",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QA Technical Interview - Cypress API tests + local mock API",
+  "scripts": {
+    "start:api": "node api-mock.js",
+    "test:e2e": "cypress run",
+    "test:open": "cypress open"
+  },
+  "devDependencies": {
+    "cypress": "^13.13.0"
+  }
+}
