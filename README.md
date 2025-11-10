@@ -1,3 +1,5 @@
+[![ci](https://github.com/garontherocks/gateless-exercise/actions/workflows/ci.yml/badge.svg)](https://github.com/garontherocks/gateless-exercise/actions/workflows/ci.yml)
+
 Gateless Exercise – QA Technical Interview
 This repo contains:
 
