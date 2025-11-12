@@ -1,4 +1,4 @@
-﻿{
+{
 "info": {
 "name": "Payment System (Mock API)",
 "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -7,84 +7,215 @@
 "variable": [
 { "key": "baseUrl", "value": "http://localhost:3001" },
 { "key": "apiKey", "value": "test_key" },
-{ "key": "intentId", "value": "" },
-{ "key": "idem", "value": "" }
+{ "key": "intentId", "value": "" }
 ],
 "item": [
 {
 "name": "Health",
-"request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] } },
-"event": [{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.code === 200);","pm.test('ok true', () => pm.response.json().ok === true);"], "type": "text/javascript" } }]
+"request": {
+"method": "GET",
+"header": [],
+"url": { "raw": "{{baseUrl}}/health" }
+},
+"event": [
+{
+"listen": "test",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+"pm.test('ok true', function () { pm.expect(pm.response.json().ok).to.eql(true); });"
+]
+}
+}
+]
 },
 {
 "name": "Create Intent",
 "event": [
-{ "listen": "prerequest", "script": { "exec": [
+{
+"listen": "prerequest",
+"script": {
+"type": "text/javascript",
+"exec": [
 "pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });",
 "if (!pm.collectionVariables.get('idem_create')) { pm.collectionVariables.set('idem_create', pm.variables.replaceIn('{{$guid}}')); }",
-"pm.request.headers.add({ key: 'Idempotency-Key', value: pm.collectionVariables.get('idem_create') });"
-], "type": "text/javascript" } },
-{ "listen": "test", "script": { "exec": [
-"pm.test('201 Created', () => pm.response.code === 201);",
-"const b = pm.response.json(); pm.expect(b).to.have.property('id'); pm.collectionVariables.set('intentId', b.id);"
-], "type": "text/javascript" } }
+"pm.request.headers.add({ key: 'Idempotency-Key', value: pm.collectionVariables.get('idem_create') });",
+"pm.request.headers.add({ key: 'Content-Type', value: 'application/json' });"
+]
+}
+},
+{
+"listen": "test",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+"var b = pm.response.json(); pm.expect(b).to.have.property('id'); pm.collectionVariables.set('intentId', b.id); pm.variables.set('intentId', b.id);"
+]
+}
+}
 ],
 "request": {
-"method": "POST", "header": [],
-"url": { "raw": "{{baseUrl}}/payment_intents", "host": ["{{baseUrl}}"], "path": ["payment_intents"] },
-"body": { "mode": "raw", "raw": "{\n "amount": 2599,\n "currency": "USD",\n "customer_id": "cus_123",\n "payment_method_id": "pm_fake_visa",\n "capture_method": "automatic"\n}" }
+"method": "POST",
+"header": [],
+"url": { "raw": "{{baseUrl}}/payment_intents" },
+"body": {
+"mode": "raw",
+"raw": "{\n "amount": 2599,\n "currency": "USD",\n "customer_id": "cus_123",\n "payment_method_id": "pm_fake_visa",\n "capture_method": "automatic"\n}"
+}
 }
 },
 {
 "name": "Confirm Intent",
 "event": [
-{ "listen": "prerequest", "script": { "exec": [
+{
+"listen": "prerequest",
+"script": {
+"type": "text/javascript",
+"exec": [
 "pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });",
 "if (!pm.collectionVariables.get('idem_confirm')) { pm.collectionVariables.set('idem_confirm', pm.variables.replaceIn('{{$guid}}')); }",
-"pm.request.headers.add({ key: 'Idempotency-Key', value: pm.collectionVariables.get('idem_confirm') });"
-], "type": "text/javascript" } },
-{ "listen": "test", "script": { "exec": ["pm.test('202 Accepted', () => pm.response.code === 202);"], "type": "text/javascript" } }
+"pm.request.headers.add({ key: 'Idempotency-Key', value: pm.collectionVariables.get('idem_confirm') });",
+"pm.request.headers.add({ key: 'Content-Type', value: 'application/json' });"
+]
+}
+},
+{
+"listen": "test",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.test('202 Accepted', function () { pm.response.to.have.status(202); });"
+]
+}
+}
 ],
 "request": {
-"method": "PATCH", "header": [],
-"url": { "raw": "{{baseUrl}}/payment_intents/{{intentId}}/confirm", "host": ["{{baseUrl}}"], "path": ["payment_intents","{{intentId}}","confirm"] },
-"body": { "mode": "raw", "raw": "{\n "payment_method_id": "pm_fake_visa"\n}" }
+"method": "PATCH",
+"header": [],
+"url": { "raw": "{{baseUrl}}/payment_intents/{{intentId}}/confirm" },
+"body": {
+"mode": "raw",
+"raw": "{\n "payment_method_id": "pm_fake_visa"\n}"
+}
 }
 },
 {
 "name": "Get Intent",
 "event": [
-{ "listen": "prerequest", "script": { "exec": ["pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });"], "type": "text/javascript" } },
-{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.code === 200);"], "type": "text/javascript" } }
+{
+"listen": "prerequest",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });"
+]
+}
+},
+{
+"listen": "test",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+]
+}
+}
 ],
-"request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/payment_intents/{{intentId}}", "host": ["{{baseUrl}}"], "path": ["payment_intents","{{intentId}}"] } }
+"request": {
+"method": "GET",
+"header": [],
+"url": { "raw": "{{baseUrl}}/payment_intents/{{intentId}}" }
+}
 },
 {
 "name": "List Jobs",
 "event": [
-{ "listen": "prerequest", "script": { "exec": ["pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });"], "type": "text/javascript" } },
-{ "listen": "test", "script": { "exec": ["pm.test('200 OK', () => pm.response.code === 200);"], "type": "text/javascript" } }
+{
+"listen": "prerequest",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });"
+]
+}
+},
+{
+"listen": "test",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+]
+}
+}
 ],
-"request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/payment_intents/{{intentId}}/jobs", "host": ["{{baseUrl}}"], "path": ["payment_intents","{{intentId}}","jobs"] } }
+"request": {
+"method": "GET",
+"header": [],
+"url": { "raw": "{{baseUrl}}/payment_intents/{{intentId}}/jobs" }
+}
 },
 {
 "name": "Get Payment",
 "event": [
-{ "listen": "prerequest", "script": { "exec": ["pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });"], "type": "text/javascript" } },
-{ "listen": "test", "script": { "exec": ["pm.test('200/404', () => [200,404].includes(pm.response.code));"], "type": "text/javascript" } }
+{
+"listen": "prerequest",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });"
+]
+}
+},
+{
+"listen": "test",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.test('200/404', function () { pm.expect([200,404]).to.include(pm.response.code); });"
+]
+}
+}
 ],
-"request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/payments/{{intentId}}", "host": ["{{baseUrl}}"], "path": ["payments","{{intentId}}"] } }
+"request": {
+"method": "GET",
+"header": [],
+"url": { "raw": "{{baseUrl}}/payments/{{intentId}}" }
+}
 },
 {
 "name": "Create Refund",
 "event": [
-{ "listen": "prerequest", "script": { "exec": ["pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });"], "type": "text/javascript" } },
-{ "listen": "test", "script": { "exec": ["pm.test('201/200', () => [200,201].includes(pm.response.code));"], "type": "text/javascript" } }
+{
+"listen": "prerequest",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.variables.get('apiKey') });",
+"pm.request.headers.add({ key: 'Content-Type', value: 'application/json' });"
+]
+}
+},
+{
+"listen": "test",
+"script": {
+"type": "text/javascript",
+"exec": [
+"pm.test('201/200', function () { pm.expect([200,201]).to.include(pm.response.code); });"
+]
+}
+}
 ],
 "request": {
-"method": "POST", "header": [],
-"url": { "raw": "{{baseUrl}}/refunds", "host": ["{{baseUrl}}"], "path": ["refunds"] },
-"body": { "mode": "raw", "raw": "{\n "payment_intent_id": "{{intentId}}",\n "amount": 1000\n}" }
+"method": "POST",
+"header": [],
+"url": { "raw": "{{baseUrl}}/refunds" },
+"body": {
+"mode": "raw",
+"raw": "{\n "payment_intent_id": "{{intentId}}",\n "amount": 1000\n}"
+}
 }
 }
 ]
