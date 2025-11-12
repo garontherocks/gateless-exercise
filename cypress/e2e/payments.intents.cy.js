@@ -1,3 +1,5 @@
+import { intents, payments as paymentsApi } from '../support/api/index.js';
+
 function uuid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     const r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
@@ -16,7 +18,7 @@ describe('Payment Intents - Happy Path + Idempotency', () => {
     });
 
     // 1) Create
-    cy.api('POST', '/payment_intents', {
+    intents.create({
       amount: 2599,
       currency: 'USD',
       customer_id: 'cus_123',
@@ -30,19 +32,17 @@ describe('Payment Intents - Happy Path + Idempotency', () => {
       const intentId = res.body.id;
 
       // 2) Confirm
-      cy.api('PATCH', `/payment_intents/${intentId}/confirm`, {
-        payment_method_id: 'pm_fake_visa'
-      }, { 'Idempotency-Key': idemConfirm }).then(r2 => {
+      intents.confirm(intentId, { payment_method_id: 'pm_fake_visa' }, { 'Idempotency-Key': idemConfirm }).then(r2 => {
         expect(r2.status).to.eq(202);
         expect(r2.body.status).to.eq('processing');
       });
 
       // 3) Poll to succeeded
-      cy.pollUntilStatus(intentId).then(r3 => {
+      intents.pollUntilSucceeded(intentId).then(r3 => {
         expect(r3.body.status).to.eq('succeeded');
 
         // 4) Jobs
-        cy.api('GET', `/payment_intents/${intentId}/jobs`).then(r4 => {
+        intents.listJobs(intentId).then(r4 => {
           expect(r4.status).to.eq(200);
           const jobs = r4.body.jobs || [];
           const types = jobs.map(j => j.type).sort();
@@ -54,7 +54,7 @@ describe('Payment Intents - Happy Path + Idempotency', () => {
         });
 
         // 5) Payment details
-        cy.api('GET', `/payments/${intentId}`).then(r5 => {
+        paymentsApi.get(intentId).then(r5 => {
           expect(r5.status).to.eq(200);
           expect(r5.body).to.include.keys('id','amount','currency','captured_at');
           expect(r5.body.amount).to.eq(2599);
@@ -62,7 +62,7 @@ describe('Payment Intents - Happy Path + Idempotency', () => {
       });
 
       // 6) Idempotency: same key -> same intent
-      cy.api('POST', '/payment_intents', {
+      intents.create({
         amount: 2599,
         currency: 'USD',
         customer_id: 'cus_123',
