@@ -51,7 +51,7 @@
 "type": "text/javascript",
 "exec": [
 "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
-"var b = pm.response.json(); pm.expect(b).to.have.property('id'); pm.collectionVariables.set('intentId', b.id);"
+"var b = pm.response.json(); pm.expect(b).to.have.property('id'); pm.collectionVariables.set('intentId', b.id); pm.variables.set('intentId', b.id);"
 ]
 }
 }
