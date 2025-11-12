@@ -67,5 +67,5 @@ docs/test-plan.md
 ```
 
 ## CI
-The badge at the top reflects the GitHub Actions workflow at `.github/workflows/ci.yml`. It runs the tests headlessly and publishes JUnit results to `cypress/results/`.
+The badge at the top reflects the GitHub Actions workflow at `.github/workflows/ci.yml`.
 
