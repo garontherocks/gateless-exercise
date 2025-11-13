@@ -20,15 +20,17 @@ describe('Payment Intents - Happy Path + Idempotency', () => {
       expect(r.body).to.have.property('ok', true);
     });
 
-    // 1) Create
-    intents.create({
+    const createPayload = {
       amount: 2599,
       currency: 'USD',
       customer_id: 'cus_123',
       payment_method_id: 'pm_fake_visa',
       capture_method: 'automatic',
       metadata: { orderId: 'ORD-1001' }
-    }, { 'Idempotency-Key': idemCreate }).then(res => {
+    };
+
+    // 1) Create
+    intents.create(createPayload, { 'Idempotency-Key': idemCreate }).then(res => {
       expect(res.status).to.eq(201);
       expect(res.body).to.include.keys('id','status','amount','currency','client_secret');
       expect(res.body.status).to.eq('requires_confirmation');
@@ -72,13 +74,7 @@ describe('Payment Intents - Happy Path + Idempotency', () => {
       });
 
       // 6) Idempotency: same key -> same intent
-      intents.create({
-        amount: 2599,
-        currency: 'USD',
-        customer_id: 'cus_123',
-        payment_method_id: 'pm_fake_visa',
-        capture_method: 'automatic'
-      }, { 'Idempotency-Key': idemCreate }).then(res2 => {
+      intents.create(createPayload, { 'Idempotency-Key': idemCreate }).then(res2 => {
         expect([200,201]).to.include(res2.status);
         expect(res2.body.id).to.exist;
       });
