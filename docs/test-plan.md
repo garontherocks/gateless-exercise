@@ -55,6 +55,7 @@ Out of scope: UI testing, database persistence, performance/load, and distribute
 - `400` for `invalid_amount` and/or `invalid_currency`.
 - `400` when confirming without `payment_method_id`.
 - `404` for getting a payment before it exists (eventual consistency).
+- `409` `idempotency_conflict` when reusing an `Idempotency-Key` with a mismatched payload.
 - `400/422` when attempting an over-refund.
 
 ## Test Execution

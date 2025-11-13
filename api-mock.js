@@ -8,13 +8,27 @@ const JSON_HDR = { 'Content-Type': 'application/json' };
 const intents = new Map();            // id -> intent
 const payments = new Map();           // intentId -> payment
 const refunds = new Map();            // refundId -> refund
-const idemCreate = new Map();         // key -> intentId
-const idemConfirm = new Map();        // key -> intentId
+const idemCreate = new Map();         // key -> { intentId, signature }
+const idemConfirm = new Map();        // key -> { intentId, signature }
 
 function uuid() {
   return 'pi_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 function nowISO() { return new Date().toISOString(); }
+
+function canonicalize(val) {
+  if (val === null || typeof val !== 'object') return val;
+  if (Array.isArray(val)) return val.map(canonicalize);
+  return Object.keys(val).sort().reduce((acc, key) => {
+    acc[key] = canonicalize(val[key]);
+    return acc;
+  }, {});
+}
+
+function bodySignature(body = {}) {
+  if (!body || typeof body !== 'object') return '';
+  return JSON.stringify(canonicalize(body));
+}
 
 function readBody(req) {
   return new Promise((resolve) => {
@@ -39,6 +53,11 @@ function notFound(res) {
 
 function badRequest(res, msg = 'bad_request') {
   res.writeHead(400, JSON_HDR);
+  res.end(JSON.stringify({ error: msg }));
+}
+
+function conflict(res, msg = 'idempotency_conflict') {
+  res.writeHead(409, JSON_HDR);
   res.end(JSON.stringify({ error: msg }));
 }
 
@@ -115,9 +134,12 @@ const server = http.createServer(async (req, res) => {
     const key = req.headers['idempotency-key'];
     const body = await readBody(req);
     const { amount, currency, customer_id, payment_method_id, capture_method } = body;
+    const signature = bodySignature(body);
 
     if (key && idemCreate.has(key)) {
-      const existingId = idemCreate.get(key);
+      const existingMapping = idemCreate.get(key);
+      if (existingMapping.signature !== signature) return conflict(res);
+      const existingId = existingMapping.intentId;
       const existing = intents.get(existingId);
       return ok(res, existing);
     }
@@ -140,7 +162,7 @@ const server = http.createServer(async (req, res) => {
       jobs: []
     };
     intents.set(id, intent);
-    if (key) idemCreate.set(key, id);
+    if (key) idemCreate.set(key, { intentId: id, signature });
     return created(res, intent);
   }
 
@@ -151,11 +173,16 @@ const server = http.createServer(async (req, res) => {
     const key = req.headers['idempotency-key'];
     const body = await readBody(req);
     const pm = body.payment_method_id;
+    const signature = bodySignature(body);
 
     if (!intents.has(intentId)) return notFound(res);
     const intent = intents.get(intentId);
 
     if (key && idemConfirm.has(key)) {
+      const existingMapping = idemConfirm.get(key);
+      if (existingMapping.intentId !== intentId || existingMapping.signature !== signature) {
+        return conflict(res);
+      }
       return ok(res, intent);
     }
 
@@ -163,7 +190,7 @@ const server = http.createServer(async (req, res) => {
 
     intent.status = 'processing';
     scheduleJobs(intent);
-    if (key) idemConfirm.set(key, intentId);
+    if (key) idemConfirm.set(key, { intentId, signature });
     return accepted(res, intent);
   }
 
