@@ -78,6 +78,8 @@ CI
 - Async operations can introduce flakiness -> bounded polling with clear timeouts.
 - In-memory mock means data resets between runs -> tests set up their own data.
 - Static bearer token -> verify presence and format in requests.
+- If the system expands into multiple services/queues, enforce distributed idempotency (shared store or database locks) so retries across workers remain safe.
+- For future multi-database or multi-region deployments, define cross-service tracing and replay-safe workflows (e.g., outbox pattern) to keep payment/ refund states consistent.
 
 ## Traceability (Specs)
 - Intents and confirmation: `cypress/e2e/payments.intents.cy.js`

@@ -38,6 +38,18 @@ npm run test:open
 
 Base URL: `http://localhost:3001`
 
+## Example Request
+
+Quick `curl` sample with Authorization and `Idempotency-Key` headers:
+
+```bash
+curl -X POST http://localhost:3001/payment_intents \
+  -H "Authorization: Bearer test_key" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: create-demo-123" \
+  -d '{"amount":2599,"currency":"USD","payment_method_id":"pm_fake_visa","customer_id":"cus_demo"}'
+```
+
 ## Postman (Manual Testing)
 Import both files into Postman:
 - `postman/Payment System.postman_collection.json`
@@ -65,6 +77,11 @@ cypress.config.js
 api-mock.js
 docs/test-plan.md
 ```
+
+## Coverage Highlights
+- `cypress/e2e/payments.negative.cy.js` exercises unauthorized access and conflicting `Idempotency-Key` scenarios.
+- `cypress/e2e/payments.intents.cy.js` verifies confirm idempotency by replaying the same key and asserting the response is unchanged.
+- `cypress/e2e/payments.refunds.cy.js` asserts `amount_exceeds_remaining` is returned when attempting to refund more than the remaining balance.
 
 ## CI
 The badge at the top reflects the GitHub Actions workflow at `.github/workflows/ci.yml`.
